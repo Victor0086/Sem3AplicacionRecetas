@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -23,6 +25,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.airbnb.lottie.LottieComposition
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.aplicacion.ui.theme.AplicacionTheme
 
 class MainActivity : ComponentActivity() {
@@ -69,10 +77,18 @@ fun MainContent() {
 }
 
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit, onCreateAccountClick: () -> Unit, onForgotPasswordClick: () -> Unit) {
+fun LoginScreen(
+    onLoginSuccess: () -> Unit,
+    onCreateAccountClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+
+    // Estados para controlar el foco en los TextFields
+    var isEmailFocused by remember { mutableStateOf(false) }
+    var isPasswordFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -81,37 +97,69 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onCreateAccountClick: () -> Unit, on
             .width(300.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.image),
-            contentDescription = "User Icon",
-            modifier = Modifier
-                .size(150.dp)
-                .padding(bottom = 16.dp)
+        // Lottie animation
+        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.logoanimacion))
+        val progress by animateLottieCompositionAsState(
+            composition = composition,
+            iterations = LottieConstants.IterateForever
         )
 
+        LottieAnimation(
+            composition = composition,
+            progress = { progress },
+            modifier = Modifier.size(200.dp)
+        )
+
+        // Email input field
         TextField(
             value = email,
             onValueChange = { email = it },
             placeholder = { Text(text = "Correo Electrónico") },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = if (isEmailFocused) Color(0xFFE3F2FD) else Color.White,
+                unfocusedContainerColor = Color(0xFFF5F5F5),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
+                .onFocusChanged { focusState ->
+                    isEmailFocused = focusState.isFocused
+                }
         )
 
+
+        // Password input field
         TextField(
             value = password,
             onValueChange = { password = it },
             placeholder = { Text(text = "Contraseña") },
             visualTransformation = PasswordVisualTransformation(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = if (isPasswordFocused) Color(0xFFE0EFFA) else Color.White,
+                unfocusedContainerColor = Color(0xFFF5F5F5),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
+                .onFocusChanged { focusState ->
+                    isPasswordFocused = focusState.isFocused
+                }
         )
 
+        // Error message
         if (errorMessage.isNotEmpty()) {
-            Text(text = errorMessage, color = Color.Red, modifier = Modifier.padding(bottom = 16.dp))
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
         }
 
+        // Login button
         Button(
             onClick = {
                 val user = usuariosRegistrados.find { it.email == email && it.password == password }
@@ -129,17 +177,21 @@ fun LoginScreen(onLoginSuccess: () -> Unit, onCreateAccountClick: () -> Unit, on
             Text(text = "Iniciar sesión", color = Color.White, fontWeight = FontWeight.Bold)
         }
 
+        // Create account button
         TextButton(onClick = onCreateAccountClick) {
             Text(text = "Crear Cuenta", color = Color(0xFF0D47A1))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Forgot password button
         TextButton(onClick = onForgotPasswordClick) {
             Text(text = "¿Olvidaste tu contraseña?", color = Color(0xFF0D47A1))
         }
     }
 }
+
+
 
 @Composable
 fun RegisterScreen(onBackToLoginClick: () -> Unit, onRegisterSuccess: () -> Unit) {
